@@ -8,19 +8,24 @@ import {
   Input,
   SimpleGrid,
   Text,
-} from '@chakra-ui/react';
-import { Alchemy, Network, Utils } from 'alchemy-sdk';
-import { useState } from 'react';
+  Spinner,
+  useToast,
+} from "@chakra-ui/react";
+import { Alchemy, Network, Utils } from "alchemy-sdk";
+import { useState } from "react";
 
 function App() {
-  const [userAddress, setUserAddress] = useState('');
+  const [userAddress, setUserAddress] = useState("");
   const [results, setResults] = useState([]);
   const [hasQueried, setHasQueried] = useState(false);
   const [tokenDataObjects, setTokenDataObjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
 
   async function getTokenBalance() {
+    setIsLoading(true);
     const config = {
-      apiKey: '<-- COPY-PASTE YOUR ALCHEMY API KEY HERE -->',
+      apiKey: "<-- COPY-PASTE YOUR ALCHEMY API KEY HERE -->",
       network: Network.ETH_MAINNET,
     };
 
@@ -39,15 +44,16 @@ function App() {
     }
 
     setTokenDataObjects(await Promise.all(tokenDataPromises));
+    setIsLoading(false);
     setHasQueried(true);
   }
   return (
     <Box w="100vw">
       <Center>
         <Flex
-          alignItems={'center'}
+          alignItems={"center"}
           justifyContent="center"
-          flexDirection={'column'}
+          flexDirection={"column"}
         >
           <Heading mb={0} fontSize={36}>
             ERC-20 Token Indexer
@@ -62,7 +68,7 @@ function App() {
         w="100%"
         flexDirection="column"
         alignItems="center"
-        justifyContent={'center'}
+        justifyContent={"center"}
       >
         <Heading mt={42}>
           Get all the ERC-20 token balances of this address:
@@ -82,34 +88,48 @@ function App() {
 
         <Heading my={36}>ERC-20 token balances:</Heading>
 
-        {hasQueried ? (
-          <SimpleGrid w={'90vw'} columns={4} spacing={24}>
+        {isLoading ? (
+          <Spinner size="xl" />
+        ) : hasQueried ? (
+          <SimpleGrid w={"90vw"} columns={4} spacing={24}>
             {results.tokenBalances.map((e, i) => {
               return (
                 <Flex
-                  flexDir={'column'}
+                  flexDir={"column"}
                   color="white"
                   bg="blue"
-                  w={'20vw'}
-                  key={e.id}
+                  w={"20vw"}
+                  key={i}
+                  p={4}
+                  borderWidth={1}
+                  borderRadius={4}
+                  boxShadow="md"
                 >
-                  <Box>
+                  <Box overflow="hidden" textOverflow="ellipsis">
                     <b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;
                   </Box>
-                  <Box>
+                  <Box overflow="hidden" textOverflow="ellipsis">
                     <b>Balance:</b>&nbsp;
                     {Utils.formatUnits(
                       e.tokenBalance,
                       tokenDataObjects[i].decimals
                     )}
                   </Box>
-                  <Image src={tokenDataObjects[i].logo} />
+                  <Box mt={2} mb={2}>
+                    <Image
+                      src={tokenDataObjects[i].logo}
+                      objectFit="contain"
+                      w="100%"
+                      h="100px"
+                      fallbackSrc="https://via.placeholder.com/100"
+                    />
+                  </Box>
                 </Flex>
               );
             })}
           </SimpleGrid>
         ) : (
-          'Please make a query! This may take a few seconds...'
+          <Text>Please make a query! This may take a few seconds...</Text>
         )}
       </Flex>
     </Box>
